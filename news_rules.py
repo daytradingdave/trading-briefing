@@ -24,7 +24,7 @@ GLOBAL = (r"interest rate|rate decision|rate statement|press conference|federal 
 # USD-rij (geldt voor EUR/USD en XAU/USD)
 USD_TOPICS = (r"pmi|ism|cpi|ppi|gdp|federal funds|fomc|press conference|trade balance|unemployment|jobless|"
               r"consumer confidence|consumer sentiment|uom|jolts|average hourly|non-farm|employment|"
-              r"10-y bond auction|30-y bond auction|auction|home sales|durable goods|empire state|"
+              r"10-y bond auction|30-y bond auction|auction|existing home sales|new home sales|durable goods|empire state|"
               r"retail sales|pce|speaks|speech|testifies")
 
 # EUR-rij (geldt voor EUR/USD)

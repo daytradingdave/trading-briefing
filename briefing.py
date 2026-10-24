@@ -265,8 +265,8 @@ def deliver(text, dry):
 
 
 # ------------------------------------------------------------------- main
-def run_alert(dry):
-    now = datetime.now(tz())
+def run_alert(dry, now=None):
+    now = now or datetime.now(tz())
     sent = set(json.loads(STATE_FILE.read_text())) if STATE_FILE.exists() else set()
     # venster 2-17 min vooraf: de check draait elke 5 min, dus de melding komt ~12-17 min van tevoren binnen
     due = [e for e in fetch_events()
@@ -293,6 +293,7 @@ def main():
     p.add_argument("mode", choices=["daily", "weekly", "alert", "test"])
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--force", action="store_true", help="negeer de 08:00-check (voor testen)")
+    p.add_argument("--now", help="alert-test: doe alsof het nu deze lokale tijd is, YYYY-MM-DDTHH:MM")
     p.add_argument("--date", help="doe alsof het deze datum is, YYYY-MM-DD (voor testen)")
     a = p.parse_args()
     now = datetime.now(tz())
@@ -301,7 +302,8 @@ def main():
     if a.mode == "test":
         return send_telegram("✅ Test: je trading briefing bot is verbonden.")
     if a.mode == "alert":
-        return run_alert(a.dry_run)
+        sim = datetime.fromisoformat(a.now).replace(tzinfo=tz()) if a.now else None
+        return run_alert(a.dry_run, sim)
 
     # GitHub Actions draait 2x (zomer/wintertijd); verstuur alleen als het hier 08:xx is.
     if a.mode == "daily" and not a.force and not a.dry_run and now.hour != 8:

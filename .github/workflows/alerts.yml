@@ -5,6 +5,10 @@ on:
     # Elke 5 min, ma t/m vr, 06:00-20:59 UTC (ruim over de handelsdag heen)
     - cron: "*/5 6-20 * * 1-5"
   workflow_dispatch:
+    inputs:
+      now:
+        description: "Optioneel (test): doe alsof het nu deze lokale tijd is, bijv. 2026-10-22T14:14"
+        required: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
@@ -29,7 +33,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TIMEZONE: Europe/Amsterdam
-        run: python briefing.py alert
+        run: python briefing.py alert ${{ inputs.now && format('--now {0}', inputs.now) || '' }}
       - uses: actions/cache/save@v4
         if: always()
         with:
