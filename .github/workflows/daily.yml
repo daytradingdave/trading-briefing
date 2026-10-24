@@ -1,0 +1,37 @@
+name: Dagelijkse briefing
+
+on:
+  schedule:
+    # 06:00 en 07:00 UTC = 08:00 in zomer- en wintertijd (NL); het script verstuurt alleen als het lokaal 08:xx is.
+    # Ma t/m vr = dagbriefing, zondag = weekoverzicht.
+    - cron: "0 6,7 * * 0-5"
+  workflow_dispatch:
+
+jobs:
+  briefing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - uses: actions/cache/restore@v4
+        with:
+          path: .state
+          key: state-${{ github.run_id }}
+          restore-keys: state-
+      - name: Briefing versturen
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
+          TIMEZONE: Europe/Amsterdam
+        run: python briefing.py daily ${{ github.event_name == 'workflow_dispatch' && '--force' || '' }}
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: .state
+          key: state-${{ github.run_id }}
