@@ -268,9 +268,10 @@ def main():
     p.add_argument("mode", choices=["daily", "weekly", "alert", "test"])
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--force", action="store_true", help="negeer de 08:00-check (voor testen)")
+    p.add_argument("--date", help="doe alsof het deze datum is, YYYY-MM-DD (voor testen)")
     a = p.parse_args()
     now = datetime.now(tz())
-    today = now.date()
+    today = datetime.strptime(a.date, "%Y-%m-%d").date() if a.date else now.date()
 
     if a.mode == "test":
         return send_telegram("✅ Test: je trading briefing bot is verbonden.")

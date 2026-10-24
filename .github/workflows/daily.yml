@@ -6,6 +6,15 @@ on:
     # Ma t/m vr = dagbriefing, zondag = weekoverzicht.
     - cron: "0 6,7 * * 0-5"
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "Wat wil je testen?"
+        type: choice
+        options: [daily, weekly]
+        default: daily
+      date:
+        description: "Optioneel: doe alsof het deze datum is (YYYY-MM-DD), bijv. een doordeweekse dag"
+        required: false
 
 jobs:
   briefing:
@@ -29,7 +38,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
           TIMEZONE: Europe/Amsterdam
-        run: python briefing.py daily ${{ github.event_name == 'workflow_dispatch' && '--force' || '' }}
+        run: python briefing.py ${{ inputs.mode || 'daily' }} ${{ github.event_name == 'workflow_dispatch' && '--force' || '' }} ${{ inputs.date && format('--date {0}', inputs.date) || '' }}
       - uses: actions/cache/save@v4
         if: always()
         with:
