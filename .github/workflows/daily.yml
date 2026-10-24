@@ -2,9 +2,9 @@ name: Dagelijkse briefing
 
 on:
   schedule:
-    # 06:00 en 07:00 UTC = 08:00 in zomer- en wintertijd (NL); het script verstuurt alleen als het lokaal 08:xx is.
+    # 06:03 en 07:03 UTC = ~08:03 in zomer- en wintertijd (NL); het script verstuurt alleen als het lokaal 08:xx is.
     # Ma t/m vr = dagbriefing, zondag = weekoverzicht.
-    - cron: "0 6,7 * * 0-5"
+    - cron: "3 6,7 * * 0-5"
   workflow_dispatch:
     inputs:
       mode:
@@ -16,9 +16,12 @@ on:
         description: "Optioneel: doe alsof het deze datum is (YYYY-MM-DD), bijv. een doordeweekse dag"
         required: false
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   briefing:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

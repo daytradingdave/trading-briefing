@@ -170,8 +170,10 @@ def build_daily(events, today):
 
     analysis = ai(
         "Maak de briefing voor vandaag.\n"
-        f"Restricted news-events (lokale tijd): {json.dumps(events_for_ai(rs))}\n"
-        f"Liquidity-data (genomen highs/lows sinds gisteren + dichtstbijzijnde open niveaus): {json.dumps(liq_raw)}\n\n"
+        + ("LET OP: de economische kalender is NIET beschikbaar. Zeg niets over events en NIET dat er geen news is; "
+           "sla punt 2 en 3 over en noem alleen dat de news handmatig gecheckt moet worden.\n"
+           if not day_events else f"Restricted news-events (lokale tijd): {json.dumps(events_for_ai(rs))}\n")
+        + f"Liquidity-data (genomen highs/lows sinds gisteren + dichtstbijzijnde open niveaus): {json.dumps(liq_raw)}\n\n"
         "Structuur:\n"
         "1) <b>🧭 Dagtoon</b>: max 3 zinnen op basis van de liquidity-data (wat is er genomen, wat ligt er nog open, "
         "beweegt DXY mee of tegen EUR/USD en goud?).\n"
