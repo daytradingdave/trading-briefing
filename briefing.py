@@ -160,8 +160,13 @@ def build_daily(events, today):
 
     liq_text, liq_raw = liquidity.liquidity_report(tz())
     if rs:
-        body = f"\n⛔ <b>News restricted (Alpha) – no-trade ±{news_rules.WINDOW_MINUTES} min</b>\n"
-        body += "\n".join(f"{fmt_event_line(e)}\n     ⛔ <b>{no_trade_window(e['time'])}</b>" for e in rs) + "\n"
+        body = (f"\n⛔ <b>RESTRICTED NEWS (Alpha) – {len(rs)} event{'s' if len(rs) != 1 else ''} vandaag</b>\n"
+                f"<i>Geen trades {news_rules.WINDOW_MINUTES} min voor en {news_rules.WINDOW_MINUTES} min na elke release.</i>\n")
+        for e in rs:
+            body += (f"\n🔴 <b>{e['time'].strftime('%H:%M')}</b> · {e['currency']} · {esc(e['title'])}"
+                     f"\n     ⛔ <b>No trading between {no_trade_range(e["time"])}</b>"
+                     f"\n     fc: {esc(e['forecast'])} | vorig: {esc(e['previous'])} · <i>{news_rules.label(e['instruments'])}</i>")
+        body += "\n"
     elif not day_events:  # doordeweeks staat er altijd wel iets in de feed -> de kalender ontbreekt dus
         body = ("\n⚠️ <b>Kalender niet beschikbaar</b> (feed leeg of niet bereikbaar). "
                 "Check de news handmatig op Forex Factory voordat je gaat traden!\n")
@@ -212,10 +217,21 @@ def build_weekly(events, start):
     return head + body
 
 
-def build_alert(e):
-    return (f"🚨 <b>Restricted news over ±15 min</b>\n\n{fmt_event_line(e)}\n\n"
-            f"⛔ No-trade window: <b>{no_trade_window(e['time'])}</b>\n"
-            f"💡 Check open posities / SL en de Alpha-regels.")
+def no_trade_range(t):
+    m = timedelta(minutes=news_rules.WINDOW_MINUTES)
+    return f"{(t - m).strftime('%H:%M')} & {(t + m).strftime('%H:%M')}"
+
+
+def build_alert(group, now):
+    """Eén bericht per releasemoment (events op dezelfde tijd worden samengevoegd)."""
+    t = group[0]["time"]
+    mins = max(1, round((t - now).total_seconds() / 60))
+    lines = [f"🚨 <b>HIGH IMPACT NEWS REMINDER</b> – release over {mins} min"]
+    for e in group:
+        lines.append(f"\n<b>{esc(e['title'])} {e['currency']}</b> Release @ <b>{t.strftime('%H:%M')}</b>"
+                     f"\n   fc: {esc(e['forecast'])} | vorig: {esc(e['previous'])} · <i>{news_rules.label(e['instruments'])}</i>")
+    lines.append(f"\n⛔ <b>No trading between {no_trade_range(t)}</b>")
+    return "\n".join(lines)
 
 
 # --------------------------------------------------------------- telegram
@@ -252,12 +268,16 @@ def deliver(text, dry):
 def run_alert(dry):
     now = datetime.now(tz())
     sent = set(json.loads(STATE_FILE.read_text())) if STATE_FILE.exists() else set()
+    # venster 2-17 min vooraf: de check draait elke 5 min, dus de melding komt ~12-17 min van tevoren binnen
     due = [e for e in fetch_events()
-           if e["instruments"] and timedelta(minutes=2) <= e["time"] - now <= timedelta(minutes=20)
+           if e["instruments"] and timedelta(minutes=2) <= e["time"] - now <= timedelta(minutes=17)
            and f"{e['title']}|{e['time'].isoformat()}" not in sent]
-    for e in due:
-        deliver(build_alert(e), dry)
-        sent.add(f"{e['title']}|{e['time'].isoformat()}")
+    groups = {}
+    for e in due:  # events op dezelfde tijd samen in 1 bericht
+        groups.setdefault(e["time"], []).append(e)
+    for t, group in sorted(groups.items()):
+        deliver(build_alert(group, now), dry)
+        sent.update(f"{e['title']}|{e['time'].isoformat()}" for e in group)
     if not dry:
         STATE_FILE.parent.mkdir(exist_ok=True)
         STATE_FILE.write_text(json.dumps(sorted(sent)[-200:]))
