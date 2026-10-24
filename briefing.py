@@ -119,7 +119,9 @@ def ai(prompt, max_tokens=1800):
         import anthropic
         client = anthropic.Anthropic(api_key=key)
         msg = client.messages.create(
-            model=CLAUDE_MODEL, max_tokens=max_tokens, system=SYSTEM_PROMPT,
+            model=CLAUDE_MODEL, max_tokens=max(max_tokens, 4000), system=SYSTEM_PROMPT,
+            # laag effort = weinig denk-tokens (goedkoop); max_tokens ruim, want denken telt mee
+            extra_body={"output_config": {"effort": "low"}},
             messages=[{"role": "user", "content": prompt}])
         return "".join(b.text for b in msg.content if b.type == "text").strip()
     except Exception as e:
