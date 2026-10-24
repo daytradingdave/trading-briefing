@@ -162,6 +162,9 @@ def build_daily(events, today):
     if rs:
         body = f"\n⛔ <b>News restricted (Alpha) – no-trade ±{news_rules.WINDOW_MINUTES} min</b>\n"
         body += "\n".join(f"{fmt_event_line(e)}\n     ⛔ <b>{no_trade_window(e['time'])}</b>" for e in rs) + "\n"
+    elif not day_events:  # doordeweeks staat er altijd wel iets in de feed -> de kalender ontbreekt dus
+        body = ("\n⚠️ <b>Kalender niet beschikbaar</b> (feed leeg of niet bereikbaar). "
+                "Check de news handmatig op Forex Factory voordat je gaat traden!\n")
     else:
         body = "\n✅ <b>Geen restricted news vandaag</b> voor EUR/USD of XAU/USD.\n"
 
